@@ -1,37 +1,36 @@
 u_register () {
     read -p "Enter username: " username
-    echo enter your Password: 
-    read -s password
-    echo re enter your password:
-    read -s re_password
-
-    if [ "$password" == "$re_password" ]; then
-        echo password correct
-
-        concatenated=$username$password
-        current_hash_value=$((0x$(sha1sum <<<$concatenated)0))
-        echo current hash value : $current_hash_value
-
-        echo $username $current_hash_value >> db.txt
-
-        file='db.txt'
-        while IFS='' read -r line || [[ -n "$line" ]]; do
-            i=1
-            for word in $line; do
-                echo $i
-                if [ "$i" -eq "1" ]; then
-                    if [ "$word" == "$username" ]; then
-                        echo r found..........
-                    fi
+    file='db.txt'
+    username_found=false
+    while IFS='' read -r line || [[ -n "$line" ]]; do
+        i=1
+        for word in $line; do
+            if [ "$i" -eq "1" ]; then
+                if [ "$word" == "$username" ]; then
+                    username_found=true
+                    break
                 fi
-                echo ":" $word ":"
-                i=$((i+1))
-            done
-            i=1
-        done < $file
+            fi
+            i=$((i+1))
+        done
+        i=1
+    done < $file
+    if [ "$username_found" = false ]; then
+        echo enter your Password: 
+        read -s password
+        echo re-enter your password:
+        read -s re_password
 
+        if [ "$password" == "$re_password" ]; then
+            echo user registered successfully.
+            concatenated=$username$password
+            current_hash_value=$((0x$(sha1sum <<<$concatenated)0))
+            echo $username $current_hash_value >> db.txt
+        else 
+            echo re-entered password doesn\'t match
+        fi
     else
-        echo password incorrect
+        echo user already exists
     fi
 }
 
@@ -42,7 +41,6 @@ login () {
 
     concatenated=$username$password
     current_hash_value=$((0x$(sha1sum <<<$concatenated)0))
-    echo current hash value : $current_hash_value
 
     file='db.txt'
 
@@ -75,6 +73,9 @@ login () {
         fi
         i=$((i+1))
     done
+    if [ "$username_found" = false ]; then
+        echo user doesn\'t exists. Register before login.
+    fi
 }
 read -p "Are you registered??[y/n] " -n 1 -r
 echo    # (optional) move to a new line
